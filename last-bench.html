@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Last Bench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Patrick+Hand&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F0E1; --ink:#2A4B8D; --ink-soft:#5D7BB5; --red:#C0392B;
+  --board:#4B5D4E; --board-dark:#28332A; --tin:#D2691E;
+  --rule:rgba(42,75,141,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:"Patrick Hand",system-ui,sans-serif;background:#232C24;color:var(--ink);
+  overflow:hidden;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+
+#stage{position:fixed;inset:0;overflow:hidden}
+#yt-room-wrap{position:fixed;left:0;bottom:0;width:240px;height:135px;
+  opacity:.001;pointer-events:none;z-index:-1;border:0}
+#scene{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);touch-action:none;display:block}
+#vig{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(115% 78% at 50% 42%,transparent 42%,rgba(16,22,16,.62) 100%)}
+
+/* chalkboard */
+#board{position:absolute;left:50%;top:0;transform:translateX(-50%);
+  width:min(520px,38vw);min-width:300px;padding:11px 16px 13px;
+  background:linear-gradient(160deg,#3B4C3E,#232E26);
+  border:9px solid #6B4A2A;border-top:0;border-radius:0 0 4px 4px;
+  box-shadow:0 14px 26px rgba(0,0,0,.5), inset 0 0 44px rgba(0,0,0,.45);
+  color:#E9E6D8;font-family:"Kalam",cursive;z-index:6}
+#board .bo-top{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.14em;opacity:.55;font-family:"Inter",sans-serif}
+#board .bo-body{display:flex;align-items:center;gap:16px;margin-top:5px}
+#board .bo-scores{line-height:1.2;font-size:clamp(14px,1.4vw,19px)}
+#board .bo-scores div{min-width:150px;display:flex;justify-content:space-between;gap:16px}
+#board .bo-scores b{font-weight:700;font-size:1.35em}
+.pip-row{display:flex;gap:6px;margin-left:auto}
+.pip{width:21px;height:21px;border:2px solid rgba(233,230,216,.5);border-radius:2px;display:grid;place-items:center;font-size:14px;line-height:1}
+.pip.you{color:#F2D06B}.pip.them{color:#E58E7A}
+
+#nav{position:absolute;right:14px;top:14px;display:flex;gap:8px;z-index:8;flex-wrap:wrap;justify-content:flex-end;max-width:66vw}
+.nav-btn{background:rgba(18,24,18,.55);border:1px solid rgba(233,230,216,.32);color:#EDEADC;
+  padding:8px 13px;border-radius:3px;font-size:14px;letter-spacing:.05em}
+.nav-btn:hover{background:rgba(18,24,18,.8)}
+.nav-btn.light{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+
+#badge{position:absolute;left:14px;bottom:14px;display:flex;align-items:center;gap:10px;z-index:7}
+#badge .tin-chip{background:var(--tin);color:#22355C;font-family:"Kalam",cursive;font-weight:700;
+  font-size:13px;padding:5px 9px 6px;border-radius:3px;line-height:1;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+#badge .pen-name{color:#DCD8C8;font-size:15px}
+#turnchip{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);z-index:7;
+  background:var(--paper);padding:7px 18px;font-size:16px;box-shadow:0 4px 10px rgba(0,0,0,.4);white-space:nowrap}
+
+/* paper */
+.overlay{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;
+  padding:16px;background:rgba(12,16,12,.42);overflow:auto;perspective:1600px}
+.overlay.open{display:flex}
+.paper{position:relative;background:var(--paper);color:var(--ink);
+  background-image:repeating-linear-gradient(180deg,transparent 0 25px,var(--rule) 25px 26px);
+  background-position:0 34px;clip-path:var(--torn);
+  padding:40px 30px 40px 46px;width:min(430px,92vw);
+  box-shadow:0 26px 50px rgba(0,0,0,.55);
+  transform:rotateX(11deg);animation:lay .3s ease-out}
+@keyframes lay{from{transform:rotateX(20deg) translateY(-14px);opacity:0}to{transform:rotateX(11deg);opacity:1}}
+@media (prefers-reduced-motion:reduce){.paper,.book,.tin{animation:none}}
+.paper::before{content:"";position:absolute;left:32px;top:0;bottom:0;width:1.5px;background:rgba(192,57,43,.6)}
+.paper.wide{width:min(880px,95vw)}
+.paper h1{font-family:"Kalam",cursive;font-size:30px;line-height:1.15;text-align:center;font-weight:700}
+.paper h2{font-family:"Kalam",cursive;font-size:19px;text-align:center;font-weight:700;letter-spacing:.06em}
+.eyebrow{font-family:"Inter",sans-serif;font-size:11px;letter-spacing:.2em;text-align:center;color:var(--ink-soft)}
+.mark{display:flex;align-items:center;justify-content:center;gap:8px;font-family:"Kalam",cursive;font-weight:700;letter-spacing:.08em;font-size:15px}
+.hr{height:2px;background:var(--ink);margin:8px 0 14px;opacity:.85}
+.hr.thin{height:1px;opacity:.32}
+.dashed{border-top:1px dashed var(--ink-soft);margin:14px 0;opacity:.7}
+.center{text-align:center}.muted{color:var(--ink-soft)}.small{font-size:14px}
+.btn-red{display:block;width:100%;background:var(--red);color:#FFF6EC;font-family:"Kalam",cursive;
+  font-weight:700;font-size:22px;letter-spacing:.06em;padding:13px;margin-top:16px;box-shadow:0 5px 0 #8E2A20;border-radius:2px}
+.btn-red:active{transform:translateY(3px);box-shadow:0 2px 0 #8E2A20}
+.btn-red[disabled]{background:#b9b0a0;box-shadow:0 5px 0 #918a7c;cursor:not-allowed}
+.btn-out{display:block;width:100%;border:2px solid var(--ink);font-family:"Kalam",cursive;font-weight:700;
+  font-size:17px;letter-spacing:.06em;padding:11px;margin-top:10px}
+.btn-out:hover{background:rgba(42,75,141,.07)}
+.btn-out[disabled]{opacity:.45;cursor:not-allowed}
+.linkish{display:block;width:100%;text-align:center;margin-top:12px;text-decoration:underline;font-size:15px}
+.back{position:absolute;left:44px;top:26px;border:1.5px solid var(--ink);width:26px;height:26px;display:grid;place-items:center;font-size:15px;line-height:1}
+
+.track{display:flex;align-items:center;margin:10px 0 4px}
+.track .seg{flex:1;height:11px;background:#CFC7B2;margin-right:4px;border-radius:1px}
+.track .seg.done{background:var(--ink)}.track .seg.now{background:var(--red)}
+.track .cup{margin-left:4px;color:var(--red);font-size:16px}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin:14px 0 6px;text-align:center}
+.vs .who{font-family:"Kalam",cursive;font-size:19px}
+.vs .pn{font-size:15px;margin-top:2px}
+.vs .divider{color:var(--red);font-family:"Kalam",cursive;font-weight:700;font-size:19px}
+.stat{display:grid;grid-template-columns:1fr 92px 1fr;gap:8px;font-size:15px;margin:3px 0;align-items:baseline}
+.stat .l{text-align:right}.stat .r{text-align:left}
+.stat .k{text-align:center;font-family:"Inter",sans-serif;font-size:10px;letter-spacing:.16em;color:var(--ink-soft)}
+.stake{display:flex;justify-content:space-between;font-size:16px;margin-top:7px}
+.stake .plus{color:#2E7D4F}.stake .minus{color:var(--red)}
+
+.book{display:grid;grid-template-columns:1fr 1fr;width:min(1020px,96vw);background:var(--paper);
+  box-shadow:0 30px 60px rgba(0,0,0,.6);
+  background-image:repeating-linear-gradient(180deg,transparent 0 25px,var(--rule) 25px 26px);
+  transform:rotateX(9deg);animation:lay .3s ease-out}
+.book > div{padding:28px 28px 24px}
+.book .left{border-right:2px solid rgba(42,75,141,.22)}
+@media (max-width:820px){.book{grid-template-columns:1fr}.book .left{border-right:0;border-bottom:2px solid rgba(42,75,141,.22)}}
+.field{display:flex;align-items:center;gap:10px;border-bottom:1.5px solid var(--ink-soft);padding-bottom:4px}
+.field input{flex:1;border:0;background:transparent;font-family:"Kalam",cursive;font-weight:700;font-size:26px;color:var(--ink);letter-spacing:.06em}
+.field input:focus{outline:none}
+.label{font-family:"Inter",sans-serif;font-size:10px;letter-spacing:.2em;color:var(--ink-soft)}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+.door{border:1.5px solid rgba(42,75,141,.32);background:#FBF8EE;text-align:left;overflow:hidden}
+.door .art{height:96px;position:relative}
+.door .cap{padding:9px 11px 12px;font-size:14px;line-height:1.25}
+.door .cap b{display:block;font-family:"Kalam",cursive;font-size:17px;margin-bottom:3px}
+.door.sel{border-color:var(--ink);background:#EFF3FB;box-shadow:inset 0 0 0 1px var(--ink)}
+.door.locked{filter:grayscale(1)}
+.mp{border:1.5px solid rgba(42,75,141,.45);padding:16px 14px;text-align:center}
+.mp h3{font-family:"Kalam",cursive;font-size:20px;font-weight:700}
+.mp p{font-size:15px;margin:6px 0 12px}
+
+.tin{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;width:min(1060px,96vw);
+  align-items:start;transform:rotateX(8deg);animation:lay .3s ease-out}
+@media (max-width:860px){.tin{grid-template-columns:1fr}}
+.case{background:var(--tin);border-radius:14px;padding:12px;box-shadow:0 26px 50px rgba(0,0,0,.6)}
+.case .lid{border:2px solid rgba(0,0,0,.16);border-radius:9px;padding:20px 14px;text-align:center;background:linear-gradient(160deg,#E07A2C,#C25C15)}
+.case .lid .wm{font-family:"Kalam",cursive;font-weight:700;font-size:clamp(26px,4.2vw,46px);letter-spacing:.1em;color:#22355C;line-height:.95}
+.case .foam{background:#2B2B2B;border-radius:9px;margin-top:10px;padding:10px;display:grid;gap:8px;max-height:44vh;overflow:auto}
+.slot{background:#1D1D1D;border-radius:26px;padding:6px 12px;display:flex;align-items:center;gap:10px;border:1px solid transparent}
+.slot:hover{border-color:#5c5c5c}.slot.sel{border-color:var(--tin)}
+.slot.locked{filter:grayscale(1) brightness(.42)}
+.slot .nm{font-size:13px;color:#CFC9BB;font-family:"Inter",sans-serif;letter-spacing:.06em}
+.detail{background:var(--paper);padding:20px 22px;box-shadow:0 14px 30px rgba(0,0,0,.45);
+  background-image:repeating-linear-gradient(180deg,transparent 0 25px,var(--rule) 25px 26px)}
+
+.podium{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:end;gap:10px;margin:10px 0 4px;text-align:center}
+.podium .blk{border:1.5px solid var(--ink-soft);font-family:"Kalam",cursive;font-size:22px;
+  background:repeating-linear-gradient(45deg,transparent 0 5px,rgba(42,75,141,.09) 5px 10px)}
+.podium .p1 .blk{border:2px solid var(--red);height:74px;line-height:70px}
+.podium .p2 .blk{height:54px;line-height:50px}
+.podium .p3 .blk{height:44px;line-height:40px}
+.podium .nm{font-family:"Kalam",cursive;font-size:16px}
+.podium .pt{font-size:14px;color:var(--ink-soft)}
+.rank{display:grid;grid-template-columns:22px 1fr 72px 60px;gap:6px;font-size:16px;padding:2px 0;align-items:baseline}
+.rank .n{font-size:12px;color:var(--ink-soft)}
+.rank .p,.rank .m{text-align:right}
+.rank.me{background:rgba(192,57,43,.1)}
+
+#settings{position:absolute;right:14px;top:62px;width:272px;background:var(--paper);z-index:30;display:none;
+  padding:14px 16px 16px;box-shadow:0 14px 30px rgba(0,0,0,.45);
+  background-image:repeating-linear-gradient(180deg,transparent 0 25px,var(--rule) 25px 26px)}
+#settings.open{display:block}
+#settings::before{content:"";position:absolute;left:10px;top:0;bottom:0;width:1.5px;background:rgba(192,57,43,.5)}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.toggle .t{font-size:16px;line-height:1.15}
+.toggle .t small{display:block;font-size:13px;color:var(--ink-soft)}
+.sw{width:44px;height:24px;border-radius:14px;background:#BDB6A5;position:relative;flex:none;transition:background .15s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .15s}
+.sw.on{background:var(--ink)}.sw.on::after{transform:translateX(20px)}
+@media (max-width:1000px){
+  #board{width:min(330px,52vw);min-width:0;padding:8px 11px 10px}
+  #board .bo-scores{font-size:13px}
+  #board .bo-scores div{min-width:100px;gap:10px}
+  #board .bo-top{font-size:9px}
+  .pip{width:15px;height:15px;font-size:11px;border-width:1.5px}
+  #nav{gap:6px}
+  .nav-btn{padding:6px 9px;font-size:12px}
+  #badge .pen-name{display:none}
+}
+.credits{text-align:center;font-size:14px;margin-top:14px;color:var(--ink-soft)}
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="scene"></canvas>
+  <div id="vig"></div>
+
+  <div id="board">
+    <div class="bo-top"><span id="bo-mode">best of 5</span><span id="bo-monitor">monitor: rinku</span></div>
+    <div class="bo-body">
+      <div class="bo-scores"><div id="bo-p1">you <b>0</b></div><div id="bo-p2">them <b>0</b></div></div>
+      <div class="pip-row" id="bo-pips"></div>
+    </div>
+  </div>
+
+  <div id="nav">
+    <button class="nav-btn" data-act="friend">pass and play</button>
+    <button class="nav-btn" data-act="ranking">the ranking</button>
+    <button class="nav-btn light" data-act="tin">the tin box</button>
+    <button class="nav-btn" data-act="menu" aria-label="settings">☰</button>
+  </div>
+
+  <div id="settings">
+    <button class="btn-out" style="margin-top:0" data-act="ranking">the class ranking</button>
+    <div class="label" style="margin-top:14px">SOUND</div>
+    <div class="toggle"><div class="t">room<small>fans, corridor and room tone</small></div><button class="sw on" id="sw-room" aria-pressed="true"></button></div>
+    <div class="toggle"><div class="t">game sounds<small>pens, bell and cheers</small></div><button class="sw on" id="sw-sfx" aria-pressed="true"></button></div>
+    <div class="dashed"></div>
+    <button class="linkish" data-act="howto" style="margin-top:0">how to play</button>
+    <button class="linkish" data-act="reset">start the year again</button>
+  </div>
+
+  <div id="badge">
+    <button class="tin-chip" data-act="book">LAST BENCH</button>
+    <span class="pen-name" id="badge-pen">Sky Streak 045</span>
+  </div>
+  <div id="turnchip">your turn</div>
+</div>
+
+<div id="yt-room-wrap" aria-hidden="true"><div id="yt-room"></div></div>
+
+<div class="overlay" id="overlay"><div id="overlay-slot"></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<script>
+"use strict";
+/* =====================================================================
+   LAST BENCH
+   A desk-top pen flicking duel. Original build, inspired by the
+   schoolyard game. Physics is flat 2D (Matter.js, no gravity); the
+   classroom is drawn with a hand-rolled perspective projection so the
+   desk, benches and floor all sit in the same camera.
+   ===================================================================== */
+
+/* ---- optional: drop in your own ambience file and it replaces the synth ---- */
+const AMBIENCE_URL = "";   // e.g. "./classroom.mp3"
+/* ---- or a youtube video to loop under the room, id only ---- */
+const AMBIENCE_YT  = "GMnWQSKJWqY";   // "" falls back to the synth room tone
+
+/* --------------------------- storage --------------------------- */
+const store = (() => {
+  const KEY = "lastbench.save.v2"; let mem = null;
+  function read(){ if(mem) return mem; try{ mem = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ mem = {}; } return mem; }
+  function write(){ try{ localStorage.setItem(KEY, JSON.stringify(mem)); }catch(e){} }
+  return {
+    get(k,d){ const v = read()[k]; return v === undefined ? d : v; },
+    set(k,v){ read(); mem[k] = v; write(); },
+    clear(){ mem = {}; try{ localStorage.removeItem(KEY); }catch(e){} }
+  };
+})();
+
+/* --------------------------- content --------------------------- */
+const WEIGHT = { light:{d:0.0012,w:"light"}, middling:{d:0.0021,w:"middling"}, heavy:{d:0.0034,w:"heavy"} };
+/* frictionAir. A pen coasts roughly speed/f before it stops, so these set
+   how far each barrel can travel. Every one of them must clear the 587
+   units between the two starting marks at full pull, or the flick can
+   never reach the other pen at all. */
+const WOOD   = { skids:{f:0.020,w:"skids"}, glides:{f:0.025,w:"glides"}, steady:{f:0.031,w:"steady"} };
+const HABIT  = { dead:{r:0.14,w:"dead touch"}, springy:{r:0.42,w:"springy"}, jumpy:{r:0.58,w:"jumpy"} };
+
+const PENS = {
+  streak:     { name:"Sky Streak 045",  barrel:"#F3F1EA", cap:"#1D5FD0", len:172, wid:14, weight:"middling", wood:"steady", habit:"dead",    motto:"the reserve. never at stake." },
+  hitpoint:   { name:"Hitpoint V-Nine", barrel:"#2C74D8", cap:"#123C7A", len:180, wid:12, weight:"light",    wood:"skids",  habit:"springy", motto:"needle tip. gone before you look up." },
+  grippo:     { name:"Grippo Rubber",   barrel:"#2A2A2A", cap:"#0F0F0F", len:168, wid:16, weight:"middling", wood:"steady", habit:"dead",    motto:"sweaty palm insurance." },
+  doodle:     { name:"Doodle Fine",     barrel:"#E8E2CF", cap:"#0E9C6B", len:162, wid:13, weight:"light",    wood:"glides", habit:"springy", motto:"margins full of stick figures." },
+  rocket:     { name:"Rocket Ball",     barrel:"#F0532F", cap:"#2B2B2B", len:172, wid:15, weight:"middling", wood:"glides", habit:"jumpy",   motto:"one flick, half the desk." },
+  blackbird:  { name:"Blackbird Gel",   barrel:"#1A1A22", cap:"#3B3B4A", len:174, wid:14, weight:"middling", wood:"skids",  habit:"dead",    motto:"writes wet, hits dry." },
+  inkwala:    { name:"Inkwala Jumbo",   barrel:"#3E2C86", cap:"#EBD26A", len:186, wid:19, weight:"heavy",    wood:"steady", habit:"dead",    motto:"fat barrel. bad handwriting." },
+  achiever:   { name:"Achiever Gel",    barrel:"#101010", cap:"#B0B0B0", len:170, wid:14, weight:"middling", wood:"glides", habit:"springy", motto:"exam day only. allegedly." },
+  chalkwhite: { name:"Chalk White Slim",barrel:"#FAFAF4", cap:"#C7C2B4", len:158, wid:11, weight:"light",    wood:"skids",  habit:"jumpy",   motto:"looks like chalk. isn't." },
+  copperline: { name:"Copperline",      barrel:"#B4703A", cap:"#6E4020", len:176, wid:16, weight:"heavy",    wood:"glides", habit:"dead",    motto:"borrowed from an uncle. never returned." },
+  silverline: { name:"Silverline Mega", barrel:"#D6D9DE", cap:"#2A63C4", len:190, wid:15, weight:"heavy",    wood:"skids",  habit:"springy", motto:"metal body. sounds expensive." },
+  goldnib:    { name:"The Goldnib",     barrel:"#E7C55C", cap:"#8A6A16", len:182, wid:16, weight:"heavy",    wood:"steady", habit:"dead",    motto:"kept in a cloth pouch. plays like it knows." }
+};
+const CLASSMATES = [
+  { name:"Bunty",  pen:"hitpoint",   skill:0.30, blurb:"back bench, same as you. plays fast and aims rough." },
+  { name:"Golu",   pen:"grippo",     skill:0.36, blurb:"window seat. lines it up twice, then taps it soft." },
+  { name:"Raju",   pen:"doodle",     skill:0.42, blurb:"draws through every period. flicks like he's signing." },
+  { name:"Pinky",  pen:"rocket",     skill:0.48, blurb:"lends her scale, never her pen. hits flat and hard." },
+  { name:"Chintu", pen:"blackbird",  skill:0.54, blurb:"eats his tiffin at 10:40. plays slow, waits you out." },
+  { name:"Meenu",  pen:"inkwala",    skill:0.60, blurb:"tallest in the row. one heavy shove and it's over." },
+  { name:"Kartik", pen:"achiever",   skill:0.66, blurb:"topper. counts the desk edge before every turn." },
+  { name:"Sana",   pen:"chalkwhite", skill:0.72, blurb:"quiet till the bell. picks the corner every time." },
+  { name:"Deepu",  pen:"copperline", skill:0.78, blurb:"sits on the bench, not at it. hits with the whole arm." },
+  { name:"Farhan", pen:"silverline", skill:0.85, blurb:"unbeaten since class 8. does not miss twice." },
+  { name:"Rinku",  pen:"goldnib",    skill:0.93, blurb:"class monitor. keeps the goldnib in a cloth pouch." }
+];
+const MONITORS = ["rinku","sana","kartik","meenu","pinky"];
+const SEED_RANKS = [
+  {n:"risny sharaf",p:42740,m:512},{n:"ankur",p:36180,m:498},{n:"aditya",p:34560,m:471},
+  {n:"i.subhradeep",p:31150,m:436},{n:"lone wolf",p:28740,m:424},{n:"king",p:22530,m:320},
+  {n:"raghu",p:21950,m:313},{n:"rhul",p:21400,m:339},{n:"iceyyy",p:20410,m:296},{n:"agrim",p:17290,m:249}
+];
+
+/* --------------------------- state --------------------------- */
+const state = {
+  name: store.get("name","JNGD"),
+  owned: store.get("owned",["streak"]),
+  equipped: store.get("equipped","streak"),
+  rung: store.get("rung",0),
+  points: store.get("points",0),
+  seenHowTo: store.get("seenHowTo",false),
+  sound: { room: store.get("sndRoom",true), sfx: store.get("sndSfx",true) },
+  match: null, monitor: MONITORS[0]
+};
+function save(){
+  store.set("name",state.name); store.set("owned",state.owned); store.set("equipped",state.equipped);
+  store.set("rung",state.rung); store.set("points",state.points); store.set("seenHowTo",state.seenHowTo);
+  store.set("sndRoom",state.sound.room); store.set("sndSfx",state.sound.sfx);
+}
+
+/* --------------------------- youtube room tone ---------------------------
+   Optional: loops one video under the classroom, muted until the first tap
+   (autoplay rules), then unmuted. If the API is blocked or offline it hands
+   the room back to the synthesised tone below. */
+const ytRoom = (() => {
+  if (!AMBIENCE_YT) return null;
+  let player = null, ready = false, want = false, dead = false;
+  const api = { onFail: null };
+  function fail(){
+    if (dead) return;
+    dead = true; player = null;
+    if (want && api.onFail) api.onFail();
+  }
+  function apply(){
+    if (!player || !ready) return;
+    try{
+      if (want){ player.unMute(); player.setVolume(26); player.playVideo(); }
+      else player.pauseVideo();
+    }catch(e){ fail(); }
+  }
+  function make(){
+    if (player || dead || !window.YT || !window.YT.Player) return;
+    try{
+      player = new YT.Player("yt-room", {
+        videoId: AMBIENCE_YT,
+        playerVars:{ autoplay:1, mute:1, controls:0, disablekb:1, fs:0, rel:0,
+                     playsinline:1, loop:1, playlist:AMBIENCE_YT },
+        events:{
+          onReady(){ ready = true; apply(); },
+          onError: fail,
+          onStateChange(e){ if (e.data === 0 && want) e.target.playVideo(); }
+        }
+      });
+    }catch(e){ fail(); }
+  }
+  const tag = document.createElement("script");
+  tag.src = "https://www.youtube.com/iframe_api"; tag.onerror = fail;
+  window.onYouTubeIframeAPIReady = make;
+  document.head.appendChild(tag);
+  setTimeout(() => { if (!ready) fail(); }, 7000);
+  api.claim = on => { if (dead) return false; want = on; apply(); return true; };
+  return api;
+})();
+
+/* --------------------------- sound ---------------------------
+   Everything is synthesised, so there are no audio files to host and
+   nothing borrowed. Set AMBIENCE_URL above to use a real recording. */
+const audio = (() => {
+  let c = null, roomBus = null, nodes = [], murmurTimer = null, bellTimer = null, el = null;
+  function ac(){ if(!c){ try{ c = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return c; }
+  function noiseBuffer(sec, brown){
+    const n = c.sampleRate*sec, b = c.createBuffer(1,n,c.sampleRate), d = b.getChannelData(0);
+    let l = 0;
+    for(let i=0;i<n;i++){
+      const w = Math.random()*2-1;
+      if(brown){ l = (l + 0.02*w)/1.02; d[i] = l*3.2; } else d[i] = w;
+    }
+    return b;
+  }
+  function blip(freq,dur,type,vol){
+    if(!state.sound.sfx) return; const x = ac(); if(!x) return;
+    const o = x.createOscillator(), g = x.createGain();
+    o.type = type||"square"; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol||0.06, x.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, x.currentTime+dur);
+    o.connect(g).connect(x.destination); o.start(); o.stop(x.currentTime+dur);
+  }
+  function murmur(){
+    if(!roomBus) return;
+    const src = c.createBufferSource(); src.buffer = noiseBuffer(1.4,false);
+    const bp = c.createBiquadFilter(); bp.type="bandpass";
+    bp.frequency.value = 380 + Math.random()*700; bp.Q.value = 3.5;
+    const g = c.createGain(); g.gain.value = 0;
+    const t = c.currentTime, d = 0.5 + Math.random()*0.8;
+    g.gain.linearRampToValueAtTime(0.055 + Math.random()*0.05, t+d*0.4);
+    g.gain.linearRampToValueAtTime(0, t+d);
+    src.connect(bp).connect(g).connect(roomBus); src.start(); src.stop(t+d+0.05);
+    murmurTimer = setTimeout(murmur, 1800 + Math.random()*5000);
+  }
+  function distantBell(){
+    if(!roomBus) return;
+    [784,988].forEach((f,i) => {
+      const o = c.createOscillator(), g = c.createGain(), lp = c.createBiquadFilter();
+      lp.type="lowpass"; lp.frequency.value = 1600;
+      o.type="sine"; o.frequency.value = f;
+      const t = c.currentTime + i*0.06;
+      g.gain.setValueAtTime(0.05,t); g.gain.exponentialRampToValueAtTime(0.0001,t+1.6);
+      o.connect(g).connect(lp).connect(roomBus); o.start(t); o.stop(t+1.7);
+    });
+    bellTimer = setTimeout(distantBell, 45000 + Math.random()*60000);
+  }
+  return {
+    click(){ blip(880,0.05,"square",0.03); },
+    launch(p){ blip(200+p*400,0.09,"sawtooth",0.05); },
+    clack(v){ blip(320+Math.random()*240,0.06,"square",Math.min(0.09,0.02+v*0.012)); },
+    fall(){ blip(150,0.3,"triangle",0.08); setTimeout(()=>blip(85,0.24,"triangle",0.06),95); },
+    win(){ [523,659,784].forEach((f,i)=>setTimeout(()=>blip(f,0.16,"triangle",0.07),i*110)); },
+    lose(){ [392,311].forEach((f,i)=>setTimeout(()=>blip(f,0.22,"triangle",0.06),i*140)); },
+    resume(){ const x = ac(); if(x && x.state === "suspended") x.resume(); },
+    room(on){
+      if(ytRoom && ytRoom.claim(on)) return;
+      if(AMBIENCE_URL){
+        if(on){ if(!el){ el = new Audio(AMBIENCE_URL); el.loop = true; el.volume = 0.35; } el.play().catch(()=>{}); }
+        else if(el) el.pause();
+        return;
+      }
+      const x = ac(); if(!x) return;
+      if(on && !roomBus){
+        roomBus = x.createGain(); roomBus.gain.value = 0.9; roomBus.connect(x.destination);
+        // ceiling fan / room tone: brown noise, low passed, breathing slowly
+        const src = x.createBufferSource(); src.buffer = noiseBuffer(3,true); src.loop = true;
+        const lp = x.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value = 340;
+        const g = x.createGain(); g.gain.value = 0.09;
+        const lfo = x.createOscillator(), lfoG = x.createGain();
+        lfo.frequency.value = 0.13; lfoG.gain.value = 0.035;
+        lfo.connect(lfoG).connect(g.gain);
+        src.connect(lp).connect(g).connect(roomBus);
+        src.start(); lfo.start();
+        nodes = [src, lfo];
+        murmurTimer = setTimeout(murmur, 1500);
+        bellTimer = setTimeout(distantBell, 40000);
+      } else if(!on && roomBus){
+        nodes.forEach(n => { try{ n.stop(); }catch(e){} });
+        clearTimeout(murmurTimer); clearTimeout(bellTimer);
+        try{ roomBus.disconnect(); }catch(e){}
+        roomBus = null; nodes = [];
+      }
+    }
+  };
+})();
+
+if (ytRoom) ytRoom.onFail = () => { if (state.sound.room) audio.room(true); };
+
+/* --------------------------- camera ---------------------------
+   World: x across the room, y into the room (0 = back wall), z up.
+   The floor plane gets a real perspective squeeze; heights lift by the
+   local scale. Both directions invert cleanly, which is what makes
+   dragging a pen on a tilted desk feel right. */
+const CW = 1200, CH = 900;        // smallest scene the camera will draw
+let LW = CW, LH = CH, CX = 600, YOFF = 0;   // grown to match the viewport
+const WALL = 168;                 // screen px of back wall above the floor line
+const SFAR = 0.55, SNEAR = 1.0, YMAX = 1600, VS = 0.75, VZ = 0.85;
+const KS = SNEAR - SFAR;
+const sAt  = y => SFAR + KS*(y/YMAX);
+const projX = (x,y) => CX + x*sAt(y);
+const projY = (y,z) => WALL + YOFF + VS*(SFAR*y + KS*y*y/(2*YMAX)) - (z||0)*VZ*sAt(y);
+function unproj(sx, sy, z){
+  const a = VS*KS/(2*YMAX);
+  const b = VS*SFAR - z*VZ*KS/YMAX;
+  const cc = -z*VZ*SFAR - (sy - WALL - YOFF);
+  const disc = b*b - 4*a*cc;
+  const y = disc <= 0 ? 0 : (-b + Math.sqrt(disc))/(2*a);
+  return { x:(sx - CX)/sAt(y), y };
+}
+/* the playing surface */
+const DESK = { hx:250, y0:420, y1:1440, h:170 };
+const onDesk = b => b.position.x > -DESK.hx && b.position.x < DESK.hx
+                 && b.position.y > DESK.y0  && b.position.y < DESK.y1;
+
+const canvas = document.getElementById("scene");
+const ctx = canvas.getContext("2d");
+let view = 1;
+function fitCanvas(){
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const deskPx = DESK.hx*2*sAt(DESK.y1);
+  // fit the scene height, and shrink further if the desk would not fit across
+  const s = Math.min(vh/CH, vw*0.90/deskPx);
+  view = s;
+  // widen or lengthen the logical scene to whatever the viewport needs, so the
+  // room fills the screen instead of the desk being blown up to fill it
+  LW = Math.max(CW, Math.ceil(vw/s));
+  LH = Math.max(CH, Math.ceil(vh/s));
+  CX = LW/2;
+  YOFF = 0;
+  const top = projY(DESK.y0, DESK.h), bot = projY(DESK.y1, DESK.h);
+  YOFF = (LH - (bot-top))/2 - top + LH*0.03;   // centre the desk, a touch low
+  if (YOFF < 96 - WALL) YOFF = 96 - WALL;      // always keep some wall showing
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  canvas.width = LW*s*dpr; canvas.height = LH*s*dpr;
+  canvas.style.width = (LW*s)+"px"; canvas.style.height = (LH*s)+"px";
+  ctx.setTransform(s*dpr,0,0,s*dpr,0,0);
+}
+window.addEventListener("resize", fitCanvas);
+function toWorld(ev){
+  const r = canvas.getBoundingClientRect();
+  return unproj((ev.clientX-r.left)/view, (ev.clientY-r.top)/view, DESK.h);
+}
+
+/* --------------------------- physics --------------------------- */
+const M = window.Matter;
+let engine, world, bodies = { you:null, them:null };
+function makeBody(pen,x,y){
+  return M.Bodies.rectangle(x,y,pen.len,pen.wid,{
+    density: WEIGHT[pen.weight].d,
+    frictionAir: WOOD[pen.wood].f,
+    restitution: HABIT[pen.habit].r,
+    friction: 0.02,
+    chamfer:{ radius: pen.wid/2 }
+  });
+}
+const START_YOU  = DESK.y1 - 210, START_THEM = DESK.y0 + 210;
+function buildArena(){
+  if (engine) M.Engine.clear(engine);
+  engine = M.Engine.create({ gravity:{x:0,y:0} });
+  world = engine.world;
+  bodies.you  = makeBody(state.match.youPen,  0, START_YOU);
+  bodies.them = makeBody(state.match.themPen, 0, START_THEM);
+  M.Composite.add(world, [bodies.you, bodies.them]);
+  M.Events.on(engine, "collisionStart", () => {
+    const v = Math.hypot(bodies.you.velocity.x-bodies.them.velocity.x, bodies.you.velocity.y-bodies.them.velocity.y);
+    audio.clack(v);
+  });
+}
+const settled = () => [bodies.you, bodies.them].every(b =>
+  Math.hypot(b.velocity.x,b.velocity.y) < 0.18 && Math.abs(b.angularVelocity) < 0.012);
+
+/* A pen launched at speed v coasts about v / frictionAir before it stops.
+   That one line is what makes aiming predictable for the bot. */
+const runFor = (pen, dist) => dist * WOOD[pen.wood].f;
+function edgeDistance(px, py, dx, dy){
+  let t = Infinity;
+  if (dx > 1e-6) t = Math.min(t, ( DESK.hx - px)/dx);
+  if (dx < -1e-6) t = Math.min(t, (-DESK.hx - px)/dx);
+  if (dy > 1e-6) t = Math.min(t, ( DESK.y1 - py)/dy);
+  if (dy < -1e-6) t = Math.min(t, ( DESK.y0 - py)/dy);
+  return t;
+}
+
+/* --------------------------- room art --------------------------- */
+let scratches = [], carvings = [];
+function seedDesk(){
+  let s = 20260903; const rnd = () => (s = (s*1664525+1013904223) % 4294967296)/4294967296;
+  scratches = []; carvings = [];
+  for (let i=0;i<150;i++){
+    const x = -DESK.hx + rnd()*DESK.hx*2, y = DESK.y0 + rnd()*(DESK.y1-DESK.y0);
+    const a = (rnd()-0.5)*0.8 + Math.PI/2, L = 20 + rnd()*140;
+    scratches.push([x,y,x+Math.cos(a)*L,y+Math.sin(a)*L,0.05+rnd()*0.12]);
+  }
+  carvings = [
+    {t:"LAST BENCH", x:200,  y:760,  r:Math.PI/2,  s:26},
+    {t:"raju",       x:-195, y:1210, r:-Math.PI/2, s:30},
+    {t:"golu",       x:-200, y:950,  r:-Math.PI/2, s:24},
+    {t:"AJ",         x:150,  y:1380, r:0.1,        s:58}
+  ];
+}
+function quad(pts){ ctx.beginPath(); pts.forEach((p,i) => i ? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1])); ctx.closePath(); }
+function P(x,y,z){ return [projX(x,y), projY(y,z)]; }
+
+function drawWallAndFloor(){
+  const horizon = WALL + YOFF;
+  ctx.clearRect(0,0,LW,LH);
+  const wall = ctx.createLinearGradient(0,0,0,Math.max(horizon,1));
+  wall.addColorStop(0,"#2C382E"); wall.addColorStop(1,"#55684F");
+  ctx.fillStyle = wall; ctx.fillRect(0,0,LW,horizon+2);
+  // floor
+  const floor = ctx.createLinearGradient(0,horizon,0,LH);
+  floor.addColorStop(0,"#B3AB97"); floor.addColorStop(.55,"#CFC7B2"); floor.addColorStop(1,"#B9B09A");
+  ctx.fillStyle = floor; ctx.fillRect(0,horizon,LW,LH-horizon);
+  ctx.strokeStyle = "rgba(92,86,70,.34)"; ctx.lineWidth = 1.4;
+  for (let x=-1800; x<=1800; x+=150){
+    const a = P(x,0,0), b = P(x,1650,0);
+    ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+  }
+  for (let y=0; y<=1750; y+=150){
+    const a = P(-1800,y,0), b = P(1800,y,0);
+    ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+  }
+  // skirting
+  ctx.fillStyle = "#3A4A3C"; ctx.fillRect(0,horizon-4,LW,5);
+}
+function woodBox(cx, cy, w, d, h, tone){
+  const hx = w/2, y0 = cy - d/2, y1 = cy + d/2;
+  const light = tone || "#C08B52", dark = shade(light,-46), edge = shade(light,-70);
+  // legs
+  ctx.fillStyle = "#241C14";
+  [[-hx+18,y0+16],[hx-18,y0+16],[-hx+18,y1-16],[hx-18,y1-16]].forEach(l => {
+    const top = P(l[0],l[1],h), bot = P(l[0],l[1],0);
+    ctx.beginPath(); ctx.moveTo(top[0]-4,top[1]); ctx.lineTo(top[0]+4,top[1]);
+    ctx.lineTo(bot[0]+5,bot[1]); ctx.lineTo(bot[0]-5,bot[1]); ctx.closePath(); ctx.fill();
+  });
+  // front face
+  ctx.fillStyle = edge;
+  quad([P(-hx,y1,h),P(hx,y1,h),P(hx,y1,h-26),P(-hx,y1,h-26)]); ctx.fill();
+  ctx.fillStyle = dark;
+  quad([P(-hx,y0,h),P(-hx,y1,h),P(-hx,y1,h-26),P(-hx,y0,h-26)]); ctx.fill();
+  quad([P(hx,y0,h),P(hx,y1,h),P(hx,y1,h-26),P(hx,y0,h-26)]); ctx.fill();
+  // top
+  const g = ctx.createLinearGradient(projX(-hx,cy),0,projX(hx,cy),0);
+  g.addColorStop(0,shade(light,-26)); g.addColorStop(.4,light); g.addColorStop(1,shade(light,-16));
+  ctx.fillStyle = g; quad([P(-hx,y0,h),P(hx,y0,h),P(hx,y1,h),P(-hx,y1,h)]); ctx.fill();
+  return { hx, y0, y1, h };
+}
+function bench(cx, cy, w){
+  ctx.fillStyle = "#241C14";
+  [[-w/2+16,cy],[w/2-16,cy]].forEach(l => {
+    const top = P(l[0],l[1],92), bot = P(l[0],l[1],0);
+    ctx.beginPath(); ctx.moveTo(top[0]-4,top[1]); ctx.lineTo(top[0]+4,top[1]);
+    ctx.lineTo(bot[0]+5,bot[1]); ctx.lineTo(bot[0]-5,bot[1]); ctx.closePath(); ctx.fill();
+  });
+  ctx.fillStyle = "#8A5C31";
+  quad([P(-w/2,cy-60,92),P(w/2,cy-60,92),P(w/2,cy+60,92),P(-w/2,cy+60,92)]); ctx.fill();
+  ctx.fillStyle = "#6B4523";
+  quad([P(-w/2,cy+60,92),P(w/2,cy+60,92),P(w/2,cy+60,74),P(-w/2,cy+60,74)]); ctx.fill();
+}
+function backpack(x,y,col,onFloor){
+  const p = P(x,y,onFloor?0:190), s = sAt(y)*(onFloor?1:0.95);
+  ctx.save(); ctx.translate(p[0],p[1]); ctx.scale(s,s);
+  if(onFloor){ ctx.fillStyle="rgba(30,26,18,.3)"; ctx.beginPath(); ctx.ellipse(0,-4,64,18,0,0,7); ctx.fill(); }
+  ctx.fillStyle = col;
+  ctx.beginPath(); ctx.roundRect(-58,-150,116,150,[26,26,16,16]); ctx.fill();
+  ctx.fillStyle = shade(col,-30);
+  ctx.beginPath(); ctx.roundRect(-40,-84,80,58,10); ctx.fill();
+  ctx.fillStyle = shade(col,26);
+  ctx.beginPath(); ctx.roundRect(-72,-128,20,66,10); ctx.fill();
+  ctx.beginPath(); ctx.roundRect(52,-128,20,66,10); ctx.fill();
+  ctx.fillStyle = "#D8D3C4"; ctx.beginPath(); ctx.arc(0,-52,5,0,7); ctx.fill();
+  if(!onFloor){ ctx.strokeStyle="#2B2B2B"; ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(0,-150); ctx.lineTo(0,-196); ctx.stroke(); }
+  ctx.restore();
+}
+function geometryBox(x,y){
+  const p = P(x,y,170), s = sAt(y);
+  ctx.save(); ctx.translate(p[0],p[1]); ctx.scale(s,s*VS);
+  ctx.fillStyle = "#D9A441"; ctx.beginPath(); ctx.roundRect(-70,-22,140,44,5); ctx.fill();
+  ctx.fillStyle = "#1E3A6E"; ctx.fillRect(-58,-12,60,22);
+  ctx.restore();
+}
+function notebook(x,y){
+  const p = P(x,y,170), s = sAt(y);
+  ctx.save(); ctx.translate(p[0],p[1]); ctx.scale(s,s*VS);
+  ctx.fillStyle = "#E8E1CB"; ctx.beginPath(); ctx.roundRect(-80,-56,160,112,3); ctx.fill();
+  ctx.strokeStyle = "rgba(42,75,141,.25)"; ctx.lineWidth = 2;
+  for(let i=-40;i<50;i+=18){ ctx.beginPath(); ctx.moveTo(-70,i); ctx.lineTo(70,i); ctx.stroke(); }
+  ctx.strokeStyle = "#C0392B"; ctx.lineWidth = 7; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(-46,44); ctx.lineTo(52,10); ctx.stroke();
+  ctx.restore();
+}
+function playDesk(){
+  const d = woodBox(0,(DESK.y0+DESK.y1)/2, DESK.hx*2, DESK.y1-DESK.y0, DESK.h, "#C79355");
+  ctx.save(); quad([P(-d.hx,d.y0,d.h),P(d.hx,d.y0,d.h),P(d.hx,d.y1,d.h),P(-d.hx,d.y1,d.h)]); ctx.clip();
+  ctx.strokeStyle = "rgba(90,58,26,.055)"; ctx.lineWidth = 1.2;
+  for (let x=-d.hx+8; x<d.hx; x+=17){
+    const a = P(x,d.y0,d.h), b = P(x+9,d.y1,d.h);
+    ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+  }
+  ctx.lineWidth = 1.5;
+  scratches.forEach(s => {
+    const a = P(s[0],s[1],d.h), b = P(s[2],s[3],d.h);
+    ctx.strokeStyle = "rgba(255,246,225,"+s[4]+")";
+    ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+  });
+  ctx.fillStyle = "rgba(78,48,18,.17)";
+  carvings.forEach(c => {
+    const p = P(c.x,c.y,d.h), sc = sAt(c.y);
+    ctx.save(); ctx.translate(p[0],p[1]); ctx.scale(sc,sc*VS); ctx.rotate(c.r);
+    ctx.font = "500 "+c.s+"px 'Patrick Hand', sans-serif"; ctx.textAlign = "center";
+    ctx.fillText(c.t,0,0); ctx.restore();
+  });
+  // the chalk circle everybody drew, and an old ink blot
+  const cp = P(90,700,d.h), cs = sAt(700);
+  ctx.save(); ctx.translate(cp[0],cp[1]); ctx.scale(cs,cs*VS);
+  ctx.strokeStyle = "rgba(255,250,235,.15)"; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.ellipse(0,0,62,50,.1,0,7); ctx.stroke(); ctx.restore();
+  const bp = P(130,1080,d.h);
+  ctx.fillStyle = "rgba(58,38,16,.22)";
+  ctx.beginPath(); ctx.ellipse(bp[0],bp[1],7,4,.4,0,7); ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle = "rgba(58,34,12,.5)"; ctx.lineWidth = 3;
+  quad([P(-d.hx,d.y0,d.h),P(d.hx,d.y0,d.h),P(d.hx,d.y1,d.h),P(-d.hx,d.y1,d.h)]); ctx.stroke();
+}
+function shade(hex,amt){
+  const n = parseInt(hex.slice(1),16);
+  const c = [n>>16,(n>>8)&255,n&255].map(v => Math.max(0,Math.min(255,v+amt)));
+  return "rgb("+c[0]+","+c[1]+","+c[2]+")";
+}
+function drawPen(b, pen, alpha){
+  const y = b.position.y, s = sAt(y), L = pen.len, Wd = pen.wid;
+  const p = P(b.position.x, y, DESK.h);
+  ctx.save(); ctx.globalAlpha = alpha;
+  // contact shadow
+  ctx.save(); ctx.translate(p[0]+5*s, p[1]+7*s); ctx.scale(s,s*VS); ctx.rotate(b.angle);
+  ctx.fillStyle = "rgba(42,26,8,.34)";
+  ctx.beginPath(); ctx.roundRect(-L/2,-Wd/2,L,Wd,Wd/2); ctx.fill(); ctx.restore();
+  ctx.translate(p[0],p[1]); ctx.scale(s,s*VS); ctx.rotate(b.angle);
+  const g = ctx.createLinearGradient(0,-Wd/2,0,Wd/2);
+  g.addColorStop(0,shade(pen.barrel,26)); g.addColorStop(.45,pen.barrel); g.addColorStop(1,shade(pen.barrel,-30));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(-L/2,-Wd/2,L,Wd,Wd/2); ctx.fill();
+  const cg = ctx.createLinearGradient(0,-Wd/2,0,Wd/2);
+  cg.addColorStop(0,shade(pen.cap,30)); cg.addColorStop(.5,pen.cap); cg.addColorStop(1,shade(pen.cap,-32));
+  ctx.fillStyle = cg; ctx.beginPath(); ctx.roundRect(-L/2,-Wd/2,L*0.30,Wd,[Wd/2,2,2,Wd/2]); ctx.fill();
+  ctx.fillStyle = shade(pen.cap,-14);
+  ctx.beginPath(); ctx.roundRect(-L/2+9,-Wd/2-3,L*0.17,3.6,2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(L/2-2,-Wd*0.30); ctx.lineTo(L/2+10,0); ctx.lineTo(L/2-2,Wd*0.30); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "rgba(0,0,0,.13)"; ctx.fillRect(-L*0.05,-Wd/2,3,Wd);
+  ctx.restore();
+}
+function drawAim(){
+  if (!aim.active) return;
+  const b = bodies[aim.side], px = b.position.x, py = b.position.y;
+  const dx = aim.x - px, dy = aim.y - py, raw = Math.hypot(dx,dy);
+  if (raw < 4) return;
+  const d = Math.min(raw, MAX_PULL), ux = dx/raw, uy = dy/raw;
+  const power = pullPower(raw);
+  const a = P(px,py,DESK.h), h = P(px+ux*d, py+uy*d, DESK.h);
+  ctx.save();
+  ctx.setLineDash([9,9]); ctx.lineWidth = 3.5; ctx.strokeStyle = "rgba(245,240,225,.8)";
+  ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(h[0],h[1]); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "#F5F0E1"; ctx.strokeStyle = "#C0392B"; ctx.lineWidth = 3.5;
+  ctx.beginPath(); ctx.arc(h[0],h[1],10*sAt(py+uy*d),0,7); ctx.fill(); ctx.stroke();
+  // where it is headed: how far this barrel actually coasts, or the edge
+  const coast = coastFor(penFor(aim.side), raw);
+  const edge = edgeDistance(px,py,-ux,-uy);
+  const run = Math.min(coast, edge);
+  const t = P(px-ux*run, py-uy*run, DESK.h);
+  ctx.setLineDash([5,12]); ctx.lineWidth = 3.5;
+  ctx.strokeStyle = "rgba(192,57,43,"+(0.32+power*0.5)+")";
+  ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(t[0],t[1]); ctx.stroke();
+  // a tick where it runs out of steam, so a pull that falls short looks short
+  if (coast < edge){
+    ctx.setLineDash([]); ctx.lineWidth = 3;
+    const n = 13*sAt(py-uy*run);
+    ctx.beginPath(); ctx.moveTo(t[0]-uy*n, t[1]); ctx.lineTo(t[0]+uy*n, t[1]); ctx.stroke();
+  }
+  ctx.restore();
+}
+let flash = null;
+function drawFlash(){
+  if (!flash) return;
+  const k = flash.t/72;
+  ctx.save(); ctx.globalAlpha = Math.min(1,k*2.6)*(k>0.6?1:k/0.6);
+  ctx.font = "700 52px 'Kalam', cursive"; ctx.textAlign = "center";
+  ctx.strokeStyle = "rgba(26,18,10,.55)"; ctx.lineWidth = 7;
+  const fy = LH*0.46;
+  ctx.strokeText(flash.text, CX, fy); ctx.fillStyle = "#F5F0E1";
+  ctx.fillText(flash.text, CX, fy); ctx.restore();
+}
+function drawScene(){
+  drawWallAndFloor();
+  // far row
+  woodBox(-640,240,540,300,170,"#B5793F"); bench(-640,470,540);
+  woodBox(640,240,540,300,170,"#B5793F"); bench(640,470,540);
+  geometryBox(-760,180); notebook(-500,200); notebook(760,190);
+  backpack(430,560,"#2C3F6B",false);
+  backpack(470,880,"#7A2E33",true);
+  // near row, behind the camera side
+  woodBox(-720,1180,560,320,170,"#A96F39"); bench(-720,900,560);
+  woodBox(720,1180,560,320,170,"#A96F39"); bench(720,900,560);
+  // the desk being played on, plus its bench
+  bench(0,DESK.y0-190,560);
+  ctx.fillStyle = "rgba(30,24,14,.28)";
+  quad([P(-300,DESK.y0+60,0),P(300,DESK.y0+60,0),P(340,DESK.y1+60,0),P(-340,DESK.y1+60,0)]); ctx.fill();
+  playDesk();
+}
+
+/* --------------------------- match flow --------------------------- */
+const chip = document.getElementById("turnchip");
+const MAX_PULL = 420, MIN_PULL = 45;
+/* One flick formula, shared by the launch and by the aim guide, so the
+   dashed line ends where the pen will really end up instead of promising
+   a reach the barrel does not have. */
+const penFor = side => side === "you" ? state.match.youPen : state.match.themPen;
+const pullPower = raw => Math.max(0, Math.min(raw, MAX_PULL) - MIN_PULL)/(MAX_PULL - MIN_PULL);
+const launchSpeed = (pen, raw) => (6 + 20*pullPower(raw)) * (0.94 + (0.0021 - WEIGHT[pen.weight].d)*20);
+const coastFor = (pen, raw) => 0.96 * launchSpeed(pen, raw) / WOOD[pen.wood].f;
+function newMatch(o){
+  state.monitor = MONITORS[Math.floor(Math.random()*MONITORS.length)];
+  state.match = {
+    kind:o.kind, youName:state.name, themName:o.themName,
+    youPen:PENS[state.equipped], themPen:o.themPen, penId:o.penId||null,
+    youScore:0, themScore:0, target:3, rounds:[], turn:"you", phase:"aim",
+    stake:o.stake||20, penalty:o.penalty||-10, themSkill:o.skill===undefined?0.5:o.skill
+  };
+  buildArena(); paintBoard();
+  setChip(o.kind==="local" ? "player 1's turn" : "your turn");
+}
+function paintBoard(){
+  const m = state.match; if(!m) return;
+  document.getElementById("bo-p1").innerHTML = esc(m.youName.toLowerCase())+" <b>"+m.youScore+"</b>";
+  document.getElementById("bo-p2").innerHTML = esc(m.themName.toLowerCase())+" <b>"+m.themScore+"</b>";
+  document.getElementById("bo-monitor").textContent = "monitor: "+state.monitor;
+  const pips = document.getElementById("bo-pips"); pips.innerHTML = "";
+  for (let i=0;i<5;i++){
+    const d = document.createElement("div"), r = m.rounds[i];
+    d.className = "pip"+(r==="you"?" you":r==="them"?" them":"");
+    d.textContent = r==="you"?"×":r==="them"?"○":"";
+    pips.appendChild(d);
+  }
+  document.getElementById("badge-pen").textContent = PENS[state.equipped].name;
+}
+const setChip = t => chip.textContent = t;
+function resetPens(){
+  const m = state.match;
+  M.Body.setPosition(bodies.you,{x:0,y:START_YOU});
+  M.Body.setPosition(bodies.them,{x:0,y:START_THEM});
+  [bodies.you,bodies.them].forEach(b => {
+    M.Body.setVelocity(b,{x:0,y:0}); M.Body.setAngularVelocity(b,0); M.Body.setAngle(b,0);
+  });
+  m.phase = "aim";
+  m.turn = m.rounds.length % 2 === 0 ? "you" : "them";
+  announceTurn();
+}
+function announceTurn(){
+  const m = state.match;
+  if (m.kind === "local") setChip(m.turn==="you" ? "player 1's turn" : "player 2's turn");
+  else setChip(m.turn==="you" ? "your turn" : m.themName.toLowerCase()+" is aiming");
+  if (m.turn === "them" && m.kind === "ladder") setTimeout(aiTurn, 800);
+}
+function launchAt(side, ux, uy, speed){
+  const m = state.match, b = bodies[side];
+  M.Body.setVelocity(b,{ x:ux*speed, y:uy*speed });
+  M.Body.setAngularVelocity(b,(Math.random()-0.5)*0.07);
+  audio.launch(Math.min(1, speed/26));
+  m.phase = "sim"; m.settleFrames = 0; m.simFrames = 0;
+  setChip("...");
+}
+/* The bot aims at the pen in front of it and picks a speed that would run
+   out just past the target, capped so a miss cannot carry it off the desk. */
+function aiTurn(){
+  const m = state.match;
+  if (!m || m.phase !== "aim" || m.turn !== "them") return;
+  const me = bodies.them.position, foe = bodies.you.position;
+  let ang = Math.atan2(foe.y-me.y, foe.x-me.x);
+  ang += (Math.random()-0.5)*(1-m.themSkill)*0.55;
+  const ux = Math.cos(ang), uy = Math.sin(ang);
+  const dist = Math.hypot(foe.x-me.x, foe.y-me.y);
+  const room = edgeDistance(me.x, me.y, ux, uy);
+  const wanted = Math.min(dist*(1.15 + m.themSkill*0.35), room*0.82);
+  const speed = Math.max(4, Math.min(26, runFor(m.themPen, Math.max(120, wanted))));
+  launchAt("them", ux, uy, speed);
+}
+function endRound(loser){
+  const m = state.match, winner = loser === "you" ? "them" : "you";
+  m.rounds.push(winner);
+  if (winner === "you") m.youScore++; else m.themScore++;
+  paintBoard();
+  flash = { text: winner === "you"
+      ? (m.kind==="local" ? "player 1 takes it" : "off the desk!")
+      : (m.kind==="local" ? "player 2 takes it" : "yours went off"), t:72 };
+  if (winner === "you") audio.win(); else audio.lose();
+  m.phase = "over";
+  setTimeout(() => {
+    if (m.youScore >= m.target || m.themScore >= m.target) endMatch(m.youScore > m.themScore);
+    else resetPens();
+  }, 1600);
+}
+function endMatch(youWon){
+  const m = state.match;
+  if (m.kind === "ladder"){
+    if (youWon){
+      state.points += m.stake;
+      if (m.penId && state.owned.indexOf(m.penId) === -1) state.owned.push(m.penId);
+      state.rung = Math.min(CLASSMATES.length, state.rung+1);
+    } else state.points = Math.max(0, state.points + m.penalty);
+    save();
+  }
+  screens.result(youWon);
+}
+
+/* --------------------------- input --------------------------- */
+const aim = { active:false, side:null, x:0, y:0 };
+canvas.addEventListener("pointerdown", e => {
+  audio.resume();
+  const m = state.match; if (!m || m.phase !== "aim") return;
+  const side = m.turn;
+  if (m.kind === "ladder" && side === "them") return;
+  const b = bodies[side], p = toWorld(e);
+  if (Math.hypot(p.x-b.position.x, p.y-b.position.y) > 130) return;
+  aim.active = true; aim.side = side; aim.x = p.x; aim.y = p.y;
+  canvas.setPointerCapture(e.pointerId); audio.click();
+});
+canvas.addEventListener("pointermove", e => {
+  if (!aim.active) return;
+  const p = toWorld(e); aim.x = p.x; aim.y = p.y;
+});
+function release(){
+  if (!aim.active) return;
+  const b = bodies[aim.side], px = b.position.x, py = b.position.y;
+  const dx = aim.x-px, dy = aim.y-py, raw = Math.hypot(dx,dy);
+  aim.active = false;
+  if (raw < MIN_PULL) return;
+  launchAt(aim.side, -dx/raw, -dy/raw, launchSpeed(penFor(aim.side), raw));
+}
+canvas.addEventListener("pointerup", release);
+canvas.addEventListener("pointercancel", release);
+
+/* --------------------------- loop --------------------------- */
+let last = performance.now();
+function loop(now){
+  const dt = Math.min(32, now-last); last = now;
+  const m = state.match;
+  if (m && engine){
+    if (m.phase === "sim"){
+      M.Engine.update(engine, dt); m.simFrames++;
+      const youOut = !onDesk(bodies.you), themOut = !onDesk(bodies.them);
+      if (youOut || themOut){ audio.fall(); endRound(youOut ? "you" : "them"); }
+      else if (settled()){
+        if (++m.settleFrames > 12){
+          m.turn = m.turn === "you" ? "them" : "you";
+          m.phase = "aim"; announceTurn();
+        }
+      } else m.settleFrames = 0;
+      if (m.simFrames > 700 && m.phase === "sim"){
+        m.turn = m.turn === "you" ? "them" : "you"; m.phase = "aim"; announceTurn();
+      }
+    } else if (m.phase === "over") M.Engine.update(engine, dt);
+
+    drawScene();
+    drawPen(bodies.them, m.themPen, onDesk(bodies.them) ? 1 : 0.3);
+    drawPen(bodies.you,  m.youPen,  onDesk(bodies.you)  ? 1 : 0.3);
+    drawAim();
+    if (flash && --flash.t <= 0) flash = null;
+    drawFlash();
+  }
+  requestAnimationFrame(loop);
+}
+
+/* --------------------------- screens --------------------------- */
+const overlay = document.getElementById("overlay");
+const slot = document.getElementById("overlay-slot");
+const open = html => { slot.innerHTML = html; overlay.classList.add("open"); };
+const close = () => { overlay.classList.remove("open"); slot.innerHTML = ""; };
+overlay.addEventListener("click", e => { if (e.target === overlay && overlay.dataset.dismissable === "1") close(); });
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const LOGO = '<span class="mark"><svg width="34" height="14" viewBox="0 0 34 14"><rect y="4" width="20" height="3" rx="1.5" fill="#2A4B8D"/><rect y="9" width="24" height="2" rx="1" fill="#2A4B8D"/><path d="M24 12 L33 2" stroke="#C0392B" stroke-width="3" stroke-linecap="round"/></svg> LAST BENCH</span>';
+const CREDITS = '<div class="credits small">a study build, made at the back of the class.</div>';
+function penSVG(pen,w){
+  w = w||190; const h = 26, wid = 12;
+  return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" aria-hidden="true">'
+   +'<rect y="'+((h-wid)/2)+'" width="'+w+'" height="'+wid+'" rx="'+(wid/2)+'" fill="'+pen.barrel+'" stroke="rgba(0,0,0,.18)"/>'
+   +'<path d="M0 '+((h-wid)/2)+' h'+(w*0.3)+' v'+wid+' h-'+(w*0.3)+' a'+(wid/2)+' '+(wid/2)+' 0 0 1 0 -'+wid+'" fill="'+pen.cap+'"/>'
+   +'<rect x="'+(w*0.06)+'" y="'+((h-wid)/2-3)+'" width="'+(w*0.16)+'" height="3" rx="1.5" fill="'+pen.cap+'"/>'
+   +'<path d="M'+(w-2)+' '+(h/2-4)+' L'+w+' '+(h/2)+' L'+(w-2)+' '+(h/2+4)+'" fill="'+pen.cap+'"/></svg>';
+}
+const statWords = p => ({ weight:WEIGHT[p.weight].w, wood:WOOD[p.wood].w, habit:HABIT[p.habit].w });
+
+const screens = {
+  book(){
+    overlay.dataset.dismissable = "0";
+    const owned = state.owned.length, total = Object.keys(PENS).length;
+    const segs = CLASSMATES.map((c,i)=>'<div class="seg '+(i<state.rung?"done":i===state.rung?"now":"")+'"></div>').join("");
+    const next = CLASSMATES[Math.min(state.rung,CLASSMATES.length-1)];
+    const sub = state.rung===0 ? "nobody played yet" : "beaten "+state.rung+" of 11 · next up "+next.name.toLowerCase();
+    open('<div class="book"><div class="left">'
+      +'<div class="label">NAME</div>'
+      +'<div class="field"><input id="nm" value="'+esc(state.name)+'" maxlength="14" spellcheck="false"><span class="muted">✎</span></div>'
+      +'<div class="label" style="margin-top:14px">PENS</div>'
+      +'<div style="font-size:18px">'+owned+' of '+total+' · <span style="color:var(--red)">'+(total-owned)+' to the goldnib</span></div>'
+      +'<div class="track">'+segs+'<span class="cup">🏆</span></div><div class="dashed"></div>'
+      +'<div style="font-size:18px">Where do you wanna play?</div><div class="pick">'
+        +'<button class="door sel"><div class="art" style="background:linear-gradient(180deg,#C9A46B,#7E6544)">'
+          +'<div style="position:absolute;inset:14px 22px;background:#6D8A82;border:3px solid #4E6660"></div>'
+          +'<div style="position:absolute;right:8px;top:6px;background:#F5F0E1;padding:0 6px;font-family:Kalam,cursive;font-weight:700">9A</div></div>'
+          +'<div class="cap"><b>Your class</b>'+esc(sub)+'</div></button>'
+        +'<button class="door locked" disabled><div class="art" style="background:linear-gradient(180deg,#9E9E9E,#6E6E6E)">'
+          +'<div style="position:absolute;inset:14px 22px;background:#7C7C7C;border:3px solid #5A5A5A"></div>'
+          +'<div style="position:absolute;right:8px;top:6px;background:#F5F0E1;padding:0 6px;font-family:Kalam,cursive;font-weight:700">9B</div>'
+          +'<div style="position:absolute;right:8px;bottom:8px">🔒</div></div>'
+          +'<div class="cap"><b>Other classes</b>win your own class first.</div></button></div>'
+      +'<button class="btn-red" data-act="continue">CONTINUE</button></div>'
+      +'<div><div class="label center">MULTIPLAYER</div><div class="hr thin"></div>'
+      +'<div style="display:grid;gap:12px;grid-template-columns:1fr 1fr">'
+        +'<div class="mp"><h3>PASS AND PLAY</h3><p>one desk, two people, one device.</p><button class="btn-out" data-act="friend">START A DUEL</button></div>'
+        +'<div class="mp"><h3>FIND SOMEONE</h3><p>online matchmaking needs a server. wire one up and this lights.</p><button class="btn-out" disabled>NOT WIRED YET</button></div>'
+      +'</div><div class="dashed"></div>'
+      +'<button class="linkish" data-act="ranking">the class ranking</button>'
+      +'<button class="linkish" data-act="howto">how to play</button>'+CREDITS+'</div></div>');
+    const input = slot.querySelector("#nm");
+    input.addEventListener("change", () => { state.name = (input.value.trim()||"JNGD").toUpperCase(); save(); paintBoard(); });
+  },
+  setup(){
+    overlay.dataset.dismissable = "0";
+    const i = Math.min(state.rung, CLASSMATES.length-1), cm = CLASSMATES[i];
+    const them = PENS[cm.pen], you = PENS[state.equipped];
+    const ys = statWords(you), ts = statWords(them), stake = 20 + i*5;
+    const segs = CLASSMATES.map((c,k)=>'<div class="seg '+(k<state.rung?"done":k===state.rung?"now":"")+'"></div>').join("");
+    open('<div class="paper"><button class="back" data-act="book">‹</button>'
+      +'<div class="eyebrow" style="margin-top:6px">CARRYING ON · '+state.points+' POINTS</div>'
+      +'<h2 style="margin-top:12px">CLASSMATE '+(i+1)+' OF 11</h2>'
+      +'<div class="track">'+segs+'<span class="cup">🏆</span></div>'
+      +'<div class="vs"><div><div class="who">'+esc(state.name)+'</div>'+penSVG(you,150)+'<div class="pn">'+esc(you.name)+'</div></div>'
+      +'<div class="divider">VS</div>'
+      +'<div><div class="who">'+esc(cm.name.toUpperCase())+'</div>'+penSVG(them,150)+'<div class="pn">'+esc(them.name)+'</div></div></div>'
+      +'<div class="hr thin"></div>'
+      +'<div class="stat"><div class="l">'+ys.weight+'</div><div class="k">WEIGHT</div><div class="r">'+ts.weight+'</div></div>'
+      +'<div class="stat"><div class="l">'+ys.wood+'</div><div class="k">ON WOOD</div><div class="r">'+ts.wood+'</div></div>'
+      +'<div class="stat"><div class="l">'+ys.habit+'</div><div class="k">HABIT</div><div class="r">'+ts.habit+'</div></div>'
+      +'<div class="dashed"></div><p class="center" style="font-size:17px">'+esc(cm.blurb)+'</p><div class="dashed"></div>'
+      +'<div class="stake"><span>take their pen</span><span class="plus">+'+stake+'</span></div>'
+      +'<div class="stake"><span>the reserve is never at stake</span><span class="minus">−10</span></div>'
+      +'<button class="btn-red" data-act="start" data-stake="'+stake+'">START</button>'
+      +'<button class="linkish" data-act="howto">HOW TO PLAY</button></div>');
+  },
+  howto(){
+    overlay.dataset.dismissable = "1";
+    open('<div class="paper">'+LOGO+'<div class="hr"></div><h1>HOW TO<br>PLAY.</h1><div class="dashed"></div>'
+      +'<div style="border:2px solid var(--ink);background:#B98244;padding:14px;margin:6px 0 12px">'
+      +'<svg viewBox="0 0 300 130" width="100%" aria-hidden="true">'
+      +'<rect x="30" y="26" width="200" height="11" rx="5.5" fill="#2C74D8" stroke="rgba(0,0,0,.2)"/>'
+      +'<rect x="30" y="26" width="58" height="11" rx="5.5" fill="#123C7A"/>'
+      +'<rect x="55" y="66" width="200" height="11" rx="5.5" fill="#F3F1EA" stroke="rgba(0,0,0,.2)"/>'
+      +'<rect x="55" y="66" width="58" height="11" rx="5.5" fill="#1D5FD0"/>'
+      +'<path d="M155 78 L155 108" stroke="#F5F0E1" stroke-width="3" stroke-dasharray="6 6"/>'
+      +'<circle cx="155" cy="112" r="9" fill="#F5F0E1" stroke="#C0392B" stroke-width="3"/></svg></div>'
+      +'<p class="center" style="font-size:19px">pull it back, then let go.</p>'
+      +'<p class="center" style="font-size:19px">the further you pull, the further it goes.</p>'
+      +'<p class="center small muted" style="margin-top:8px">knock the other pen off the desk. first to 3 rounds keeps the pen.</p>'
+      +'<button class="btn-out" data-act="close">GOT IT</button>'+CREDITS+'</div>');
+  },
+  result(youWon){
+    overlay.dataset.dismissable = "0";
+    const m = state.match;
+    if (m.kind === "local"){
+      open('<div class="paper">'+LOGO+'<div class="hr"></div>'
+        +'<h1>'+(youWon?"PLAYER 1":"PLAYER 2")+'<br>KEEPS THE PEN.</h1>'
+        +'<p class="center" style="font-size:18px;margin-top:10px">chalked at '+m.youScore+'-'+m.themScore+'.</p>'
+        +'<button class="btn-red" data-act="friend">PLAY AGAIN</button>'
+        +'<button class="linkish" data-act="book">BACK TO THE DESK</button></div>');
+      return;
+    }
+    const won = PENS[m.penId], done = state.rung >= CLASSMATES.length;
+    open('<div class="paper">'+LOGO+'<div class="hr"></div>'
+      +'<h1>'+(youWon ? (done?"CLASS CHAMPION.":"YOU TOOK<br>THE PEN.") : "IT STAYS<br>WITH THEM.")+'</h1>'
+      +'<p class="center" style="font-size:18px;margin:8px 0 4px">chalked at '+m.youScore+'-'+m.themScore+'.</p>'
+      +(youWon
+        ? '<div class="center" style="margin:10px 0">'+penSVG(won,200)+'<div style="font-family:Kalam,cursive;font-size:20px">'+esc(won.name)+'</div><div class="small muted">'+esc(won.motto)+'</div></div>'
+          +'<div class="stake"><span>points</span><span class="plus">+'+m.stake+'</span></div>'
+        : '<div class="stake"><span>points</span><span class="minus">'+m.penalty+'</span></div>')
+      +'<div class="stake"><span>your total</span><span>'+state.points+'</span></div>'
+      +(done?'<p class="center small muted" style="margin-top:10px">every pen in the class is in your box.</p>':'')
+      +'<button class="btn-red" data-act="'+(done?"tin":"setup")+'">'+(done?"OPEN THE TIN BOX":(youWon?"NEXT CLASSMATE":"TRY AGAIN"))+'</button>'
+      +'<button class="linkish" data-act="book">BACK TO THE DESK</button></div>');
+  },
+  tin(sel){
+    overlay.dataset.dismissable = "1";
+    const selId = sel || state.equipped;
+    const slots = Object.keys(PENS).map(id => {
+      const p = PENS[id], own = state.owned.indexOf(id) !== -1;
+      return '<button class="slot '+(own?"":"locked")+(id===selId?" sel":"")+'" data-pen="'+id+'">'+penSVG(p,150)+'<span class="nm">'+esc(p.name)+'</span></button>';
+    }).join("");
+    const p = PENS[selId], own = state.owned.indexOf(selId) !== -1;
+    const holder = CLASSMATES.find(c => c.pen === selId);
+    const status = own ? (selId===state.equipped ? "PLAYING THIS NEXT MATCH" : "IN YOUR BOX")
+                       : "STILL WITH: "+(holder?holder.name.toUpperCase():"SOMEONE ELSE");
+    open('<div class="tin"><div class="case"><div class="lid"><div class="wm">LAST BENCH</div>'
+      +'<svg width="180" height="52" viewBox="0 0 180 52" style="margin-top:6px"><rect x="6" y="14" width="96" height="10" rx="5" fill="#22355C"/><rect x="6" y="30" width="112" height="4" fill="#22355C"/><path d="M118 34 L168 6" stroke="#B4341F" stroke-width="9" stroke-linecap="round"/></svg>'
+      +'</div><div class="foam">'+slots+'</div></div>'
+      +'<div><div style="display:flex;gap:8px;margin-bottom:10px">'
+        +'<button class="nav-btn light" data-act="ranking">RANKING</button>'
+        +'<button class="nav-btn light" data-act="howto">HOW TO PLAY</button></div>'
+      +'<div class="detail">'+LOGO+'<div class="center" style="margin:12px 0 6px">'+penSVG(p,230)+'</div>'
+      +'<h2 style="font-size:24px">'+esc(p.name.toUpperCase())+'</h2><div class="hr"></div>'
+      +'<p class="center">'+esc(p.motto)+'</p>'
+      +'<p class="center small muted" style="margin-top:6px">'+esc(status)+'</p>'
+      +'<div class="stat" style="margin-top:10px"><div class="l">'+statWords(p).weight+'</div><div class="k">WEIGHT</div><div class="r">'+statWords(p).habit+'</div></div>'
+      +'<div class="center small muted">on wood: '+statWords(p).wood+'</div></div>'
+      +'<div style="display:flex;gap:10px">'
+        +'<button class="btn-out" data-act="equip" data-pen="'+selId+'" '+(own?"":"disabled")+'>'+(own?"THIS IS YOUR PEN":"NOT YOURS YET")+'</button>'
+        +'<button class="btn-out" data-act="close">SHUT THE BOX</button></div></div></div>');
+  },
+  ranking(){
+    overlay.dataset.dismissable = "1";
+    const rows = SEED_RANKS.slice();
+    rows.push({ n:state.name.toLowerCase(), p:state.points, m:state.rung, me:true });
+    rows.sort((a,b) => b.p-a.p);
+    const t = rows.slice(0,3), rest = rows.slice(3,10);
+    const podium = '<div class="p2"><div class="nm">'+esc(t[1].n)+'</div><div class="pt">'+t[1].p+'</div><div class="blk">2</div></div>'
+      +'<div class="p1"><div class="nm">'+esc(t[0].n)+'</div><div class="pt">'+t[0].p+'</div><div class="blk">1</div></div>'
+      +'<div class="p3"><div class="nm">'+esc(t[2].n)+'</div><div class="pt">'+t[2].p+'</div><div class="blk">3</div></div>';
+    const list = rest.map((r,i)=>'<div class="rank'+(r.me?" me":"")+'"><span class="n">'+(i+4)+'</span><span>'
+      +(r.me?"👑 ":"")+esc(r.n)+'</span><span class="p">'+r.p+'</span><span class="m">'+r.m+'</span></div>').join("");
+    open('<div class="paper wide">'+LOGO+'<div class="hr"></div>'
+      +'<div class="eyebrow">THE CLASS · 348,203 PLAYING</div>'
+      +'<div class="podium">'+podium+'</div><div class="hr thin"></div>'
+      +'<div class="rank" style="color:var(--ink-soft);font-size:11px;font-family:Inter,sans-serif;letter-spacing:.16em"><span></span><span>AND THEN</span><span class="p">POINTS</span><span class="m">MATCHES</span></div>'
+      +list
+      +'<p class="center small muted" style="margin-top:12px">the rest of the class lives on a server you have not built yet.</p>'
+      +'<p class="center small muted">your points are kept on this device.</p>'
+      +'<button class="btn-out" data-act="close">GO TO THE DESK</button>'+CREDITS+'</div>');
+  },
+  quit(){
+    overlay.dataset.dismissable = "1";
+    const m = state.match;
+    open('<div class="paper">'+LOGO+'<div class="hr"></div><div class="eyebrow">A FRIEND</div>'
+      +'<h1 style="margin-top:8px">PUT THIS<br>MATCH DOWN?</h1>'
+      +'<p class="center" style="margin-top:10px">it stays chalked at '+m.youScore+'-'+m.themScore+'. you can carry on after.</p>'
+      +'<button class="btn-out" data-act="friend-go">GO PLAY A FRIEND</button>'
+      +'<button class="linkish" data-act="close">KEEP PLAYING</button></div>');
+  }
+};
+
+/* --------------------------- actions --------------------------- */
+function startLadderMatch(stake){
+  const i = Math.min(state.rung, CLASSMATES.length-1), cm = CLASSMATES[i];
+  newMatch({ kind:"ladder", themName:cm.name, themPen:PENS[cm.pen], penId:cm.pen,
+             stake: stake || (20+i*5), penalty:-10, skill:cm.skill });
+  close();
+  if (!state.seenHowTo){ state.seenHowTo = true; save(); screens.howto(); }
+}
+function startLocalMatch(){
+  newMatch({ kind:"local", themName:"Player 2",
+             themPen: PENS[state.equipped === "hitpoint" ? "streak" : "hitpoint"] });
+  close();
+}
+document.addEventListener("click", e => {
+  audio.resume();
+  const t = e.target.closest("[data-act],[data-pen]");
+  if (!t) return;
+  const act = t.dataset.act;
+  if (t.dataset.pen && !act){ screens.tin(t.dataset.pen); return; }
+  switch(act){
+    case "menu": document.getElementById("settings").classList.toggle("open"); break;
+    case "friend":
+      if (state.match && state.match.kind === "ladder" && state.match.rounds.length > 0 && state.match.phase !== "idle") screens.quit();
+      else startLocalMatch();
+      break;
+    case "friend-go": startLocalMatch(); break;
+    case "ranking": screens.ranking(); break;
+    case "tin": screens.tin(); break;
+    case "book": screens.book(); break;
+    case "setup": case "continue": screens.setup(); break;
+    case "howto": screens.howto(); break;
+    case "start": startLadderMatch(parseInt(t.dataset.stake,10)); break;
+    case "equip":
+      state.equipped = t.dataset.pen; save(); paintBoard(); screens.tin(t.dataset.pen);
+      if (state.match && state.match.phase === "aim" && state.match.kind === "ladder"){
+        state.match.youPen = PENS[state.equipped]; buildArena();
+      }
+      break;
+    case "close": close(); break;
+    case "reset": if (confirm("Clear the tin box and start the year again?")){ store.clear(); location.reload(); } break;
+  }
+  if (act && act !== "menu") document.getElementById("settings").classList.remove("open");
+});
+document.getElementById("sw-room").addEventListener("click", function(){
+  audio.resume(); state.sound.room = !state.sound.room;
+  this.classList.toggle("on", state.sound.room);
+  this.setAttribute("aria-pressed", String(state.sound.room));
+  audio.room(state.sound.room); save();
+});
+document.getElementById("sw-sfx").addEventListener("click", function(){
+  state.sound.sfx = !state.sound.sfx;
+  this.classList.toggle("on", state.sound.sfx);
+  this.setAttribute("aria-pressed", String(state.sound.sfx)); save();
+});
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if (overlay.classList.contains("open")){ if (overlay.dataset.dismissable === "1") close(); }
+  else screens.book();
+});
+(function tornEdge(){
+  const teeth = 46, d = 9, pts = [];
+  for (let i=0;i<=teeth;i++) pts.push((i/teeth*100).toFixed(2)+"% "+(i%2?d+"px":"0px"));
+  pts.push("100% 100%");
+  for (let i=teeth;i>=0;i--) pts.push((i/teeth*100).toFixed(2)+"% calc(100% - "+(i%2?d:0)+"px)");
+  document.documentElement.style.setProperty("--torn","polygon("+pts.join(",")+")");
+})();
+
+/* --------------------------- boot --------------------------- */
+function boot(){
+  if (!window.Matter){
+    document.body.insertAdjacentHTML("beforeend",
+      '<div style="position:fixed;inset:0;display:grid;place-items:center;background:#20291F;color:#F5F0E1;font-size:20px;padding:24px;text-align:center;z-index:99">Matter.js did not load. It comes from a CDN, so the first load needs a connection.</div>');
+    return;
+  }
+  seedDesk(); fitCanvas();
+  const i = Math.min(state.rung, CLASSMATES.length-1), cm = CLASSMATES[i];
+  newMatch({ kind:"ladder", themName:cm.name, themPen:PENS[cm.pen], penId:cm.pen, stake:20+i*5, penalty:-10, skill:cm.skill });
+  state.match.phase = "idle";
+  document.getElementById("sw-room").classList.toggle("on", state.sound.room);
+  document.getElementById("sw-sfx").classList.toggle("on", state.sound.sfx);
+  const startAudio = () => { audio.resume(); if (state.sound.room) audio.room(true); document.removeEventListener("pointerdown", startAudio); };
+  document.addEventListener("pointerdown", startAudio);
+  requestAnimationFrame(loop);
+  screens.book();
+}
+boot();
+</script>
+</body>
+</html>
